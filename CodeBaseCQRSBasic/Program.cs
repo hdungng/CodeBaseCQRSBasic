@@ -1,34 +1,59 @@
+using CodeBaseCQRSBasic.Infrastructure;
+using CodeBaseCQRSBasic.Seed;
+using FluentValidation;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
 
-namespace CodeBaseCQRSBasic
+namespace CodeBaseCQRSBasic;
+
+public class Program
 {
-    public class Program
+    public static async Task Main(string[] args)
     {
-        public static void Main(string[] args)
+        var builder = WebApplication.CreateBuilder(args);
+
+        builder.Services.AddControllers();
+        builder.Services.AddOpenApi();
+
+        var provider = builder.Configuration.GetValue<string>("DatabaseProvider") ?? "SqlServer";
+
+        builder.Services.AddDbContext<AppDbContext>(options =>
         {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-
-            builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            if (provider.Equals("MySql", StringComparison.OrdinalIgnoreCase))
             {
-                app.MapOpenApi();
+                var mySqlConnection = builder.Configuration.GetConnectionString("MySqlConnection")
+                    ?? throw new InvalidOperationException("MySql connection string is not configured.");
+                options.UseMySql(mySqlConnection, ServerVersion.AutoDetect(mySqlConnection));
             }
+            else
+            {
+                var sqlServerConnection = builder.Configuration.GetConnectionString("SqlServerConnection")
+                    ?? throw new InvalidOperationException("SQL Server connection string is not configured.");
+                options.UseSqlServer(sqlServerConnection);
+            }
+        });
 
-            app.UseHttpsRedirection();
+        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
+        builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+        builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
-            app.UseAuthorization();
+        var app = builder.Build();
 
-
-            app.MapControllers();
-
-            app.Run();
+        using (var scope = app.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await DatabaseSeeder.SeedAsync(context);
         }
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapOpenApi();
+        }
+
+        app.UseHttpsRedirection();
+        app.UseAuthorization();
+        app.MapControllers();
+
+        await app.RunAsync();
     }
 }

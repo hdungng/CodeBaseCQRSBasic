@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="CodeBaseCQRSBasic/CodeBaseCQRSBasic.csproj" />
+  <Project Path="Tests/CodeBaseCQRSBasic.Tests/CodeBaseCQRSBasic.Tests.csproj" />
 </Solution>

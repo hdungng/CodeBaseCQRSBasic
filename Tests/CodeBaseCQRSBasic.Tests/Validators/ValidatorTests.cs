@@ -10,10 +10,11 @@ public class ValidatorTests
     public void UserValidator_Should_Have_Error_For_Invalid_Data()
     {
         var validator = new UserValidator();
-        var result = validator.TestValidate(new CreateUserCommand("", "bad-email", 0));
+        var result = validator.TestValidate(new CreateUserCommand("", "bad-email", "short", 0));
 
         result.ShouldHaveValidationErrorFor(x => x.UserName);
         result.ShouldHaveValidationErrorFor(x => x.Email);
+        result.ShouldHaveValidationErrorFor(x => x.Password);
         result.ShouldHaveValidationErrorFor(x => x.RoleId);
     }
 
@@ -21,7 +22,7 @@ public class ValidatorTests
     public void UserValidator_Should_Not_Have_Error_For_Valid_Data()
     {
         var validator = new UserValidator();
-        var result = validator.TestValidate(new CreateUserCommand("john", "john@mail.com", 1));
+        var result = validator.TestValidate(new CreateUserCommand("john", "john@mail.com", "Password123!", 1));
 
         result.ShouldNotHaveAnyValidationErrors();
     }

@@ -9,6 +9,7 @@ public class UserValidator : AbstractValidator<CreateUserCommand>
     {
         RuleFor(x => x.UserName).NotEmpty();
         RuleFor(x => x.Email).NotEmpty().EmailAddress();
+        RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
         RuleFor(x => x.RoleId).GreaterThan(0);
     }
 }

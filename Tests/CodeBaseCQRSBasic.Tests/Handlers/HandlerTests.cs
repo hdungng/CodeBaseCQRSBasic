@@ -3,6 +3,7 @@ using CodeBaseCQRSBasic.Domain;
 using CodeBaseCQRSBasic.Handlers;
 using CodeBaseCQRSBasic.Queries;
 using CodeBaseCQRSBasic.Tests.Common;
+using CodeBaseCQRSBasic.Services;
 using FluentAssertions;
 
 namespace CodeBaseCQRSBasic.Tests.Handlers;
@@ -28,8 +29,8 @@ public class HandlerTests
         context.Roles.Add(new Role { Id = 1, Name = "User" });
         await context.SaveChangesAsync();
 
-        var handler = new CreateUserCommandHandler(context);
-        var result = await handler.Handle(new CreateUserCommand("john", "john@mail.com", 1), CancellationToken.None);
+        var handler = new CreateUserCommandHandler(context, new PasswordHasherService());
+        var result = await handler.Handle(new CreateUserCommand("john", "john@mail.com", "Password123!", 1), CancellationToken.None);
 
         result.Id.Should().BeGreaterThan(0);
         context.Users.Count().Should().Be(1);
